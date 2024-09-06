@@ -16,12 +16,12 @@ namespace azure_functions_playground
         }
 
         [Function(nameof(PlaygroundHttpFunction))]
-        [ServiceBusOutput("incomingdataqueue", Connection = "ServiceBusConnectionString")]
+        [ServiceBusOutput("incomingdataqueue", Connection = "ServiceBusConnection")]
         public string Run([HttpTrigger(AuthorizationLevel.Function, "post")]
         HttpRequest req, [FromBody] TemperatureData data)
         {
             string? OutputMessage = null;
-
+            
             if (!Validator(data))
             {
                 return OutputMessage;
@@ -29,6 +29,7 @@ namespace azure_functions_playground
             else
             {
                 OutputMessage = JsonSerializer.Serialize(data);
+                _logger.LogInformation("Sending data to message queue!");
                 return OutputMessage;
             }
         }
