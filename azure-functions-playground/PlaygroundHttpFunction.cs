@@ -17,13 +17,16 @@ namespace azure_functions_playground
 
         [Function(nameof(PlaygroundHttpFunction))]
         [ServiceBusOutput("incomingdataqueue", Connection = "ServiceBusConnection")]
-        public string Run([HttpTrigger(AuthorizationLevel.Function, "post")]
+        public async Task<string> Run([HttpTrigger(AuthorizationLevel.Function, "post")]
         HttpRequest req, [FromBody] TemperatureData data)
         {
             string? OutputMessage = null;
-            
+
+            _logger.LogInformation($"Got data:  {JsonSerializer.Serialize(data)}");
+
             if (!Validator(data))
             {
+                _logger.LogInformation("Data didn't pass validation, discarding!");
                 return OutputMessage;
             }
             else
