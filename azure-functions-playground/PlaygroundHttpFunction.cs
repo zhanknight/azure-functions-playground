@@ -45,8 +45,9 @@ namespace azure_functions_playground
             {
                 isValid = false;
             }
-            if (data.TimeStamp > DateTime.Now)
+            if (data.TimeStamp > (DateTime.UtcNow))
             {
+                // DateTime is the worst. 
                 isValid = false;
             }
             if (data.Temperature < 0.1 | data.Temperature > .90)
