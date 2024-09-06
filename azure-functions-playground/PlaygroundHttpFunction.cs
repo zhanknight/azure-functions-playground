@@ -1,12 +1,12 @@
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 using FromBodyAttribute = Microsoft.Azure.Functions.Worker.Http.FromBodyAttribute;
 
 namespace azure_functions_playground
 {
-    public class PlaygroundHttpFunction
+    public partial class PlaygroundHttpFunction
     {
         private readonly ILogger<PlaygroundHttpFunction> _logger;
 
@@ -15,17 +15,21 @@ namespace azure_functions_playground
             _logger = logger;
         }
 
-        [Function("PlaygroundHttpFunction")]
-        public IActionResult Run([HttpTrigger(AuthorizationLevel.Function, "post")]
+        [Function(nameof(PlaygroundHttpFunction))]
+        [ServiceBusOutput("incomingdataqueue", Connection = "ServiceBusConnectionString")]
+        public string Run([HttpTrigger(AuthorizationLevel.Function, "post")]
         HttpRequest req, [FromBody] TemperatureData data)
         {
+            string? OutputMessage = null;
+
             if (!Validator(data))
             {
-                return new BadRequestObjectResult("Invalid data");
+                return OutputMessage;
             }
             else
             {
-                return new OkObjectResult("Data validated and accepted for processing!");
+                OutputMessage = JsonSerializer.Serialize(data);
+                return OutputMessage;
             }
         }
 
@@ -37,23 +41,16 @@ namespace azure_functions_playground
             {
                 isValid = false;
             }
-            if (data.Time > DateTime.Now)
+            if (data.TimeStamp > DateTime.Now)
             {
                 isValid = false;
             }
-            if (data.Temperature < 0.0 | data.Temperature > .90)
+            if (data.Temperature < 0.1 | data.Temperature > .90)
             {
                 isValid = false;
             }
 
             return isValid;
-        }
-
-        public class TemperatureData
-        {
-            public int DeviceId { get; set; }
-            public DateTime Time { get; set; }
-            public double Temperature { get; set; }
         }
     }
 }
